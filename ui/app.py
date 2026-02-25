@@ -316,30 +316,18 @@ def render_feedback_buttons(msg_idx: int):
 
 # ── Citations renderer ─────────────────────────────────────────────────────────
 def render_citations(citations: list):
-    """Render an expandable citations panel."""
     with st.expander(f"📚 Sources ({len(citations)})", expanded=False):
+        lines = []
         for i, c in enumerate(citations, 1):
             title = c.get("title", "Unknown")
             page = c.get("page")
             url = c.get("url", "")
-
-            col1, col2 = st.columns([4, 1])
-            with col1:
-                st.markdown(f"**[{i}] {title}**")
-                if page:
-                    st.caption(f"📄 Page {page}")
-            with col2:
-                if url and page:
-                    st.link_button(
-                        f"Page {page}", url,
-                        use_container_width=True,
-                        help=f"Open {title} at page {page}",
-                    )
-                elif url:
-                    st.link_button("Open", url, use_container_width=True)
-
-            if i < len(citations):
-                st.divider()
+            label = f"{title} (p{page})" if page else title
+            if url:
+                lines.append(f"{i}. [{label}]({url})")
+            else:
+                lines.append(f"{i}. {label}")
+        st.markdown("\n".join(lines))
 
 
 # ── Chat history ───────────────────────────────────────────────────────────────

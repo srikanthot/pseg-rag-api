@@ -142,11 +142,13 @@ def _build_citations(chunks: list) -> list:
             continue
         seen.add(key)
 
-        url = _sas_url(source_file)
-        if url and page:
-            url = f"{url}#page={page}"
-        elif not url:
-            url = chunk.get("source_url") or ""
+        source_url = chunk.get("source_url", "")
+        if source_url:
+            url = source_url
+        else:
+            url = _sas_url(source_file) or ""
+            if url and page:
+                url = f"{url}#page={page}"
 
         title = source_file
         if "." in title:
