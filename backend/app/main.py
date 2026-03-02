@@ -1,4 +1,5 @@
 import logging
+import traceback
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException
@@ -52,8 +53,8 @@ def chat(req: ChatRequest):
             citations=[CitationOut(title=c.title, url=c.url, page=c.page) for c in citations],
         )
     except Exception as e:
-        logger.error(f"Chat error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to generate response")
+        logger.error("Chat error: %s\n%s", e, traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":

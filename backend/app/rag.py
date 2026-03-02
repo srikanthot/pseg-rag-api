@@ -17,6 +17,27 @@ from .config import settings
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Greeting / chitchat detection — bypass RAG for non-document queries
+# ---------------------------------------------------------------------------
+
+_GREETINGS = {
+    "hi", "hello", "hey", "hiya", "howdy", "greetings",
+    "good morning", "good afternoon", "good evening",
+    "hi there", "hello there", "hey there",
+}
+
+GREETING_RESPONSE = (
+    "Hello! I'm the PSEG Tech Manual Assistant. "
+    "Ask me anything about PSEG technical manuals and I'll find the answer for you."
+)
+
+
+def _is_greeting(text: str) -> bool:
+    normalized = text.strip().lower().rstrip("!.,?")
+    return normalized in _GREETINGS
+
+
 # How many conversation turns (user + assistant pairs) to keep in context.
 # 5 turns = 10 messages. Enough for a focused topic thread while keeping
 # token usage predictable.
@@ -233,6 +254,9 @@ def _reformat_answer(question: str, prev_answer: str) -> str:
 # ---------------------------------------------------------------------------
 
 def answer(question: str, top_k: Optional[int] = None, chat_history: Optional[list] = None) -> tuple:
+    if _is_greeting(question):
+        return GREETING_RESPONSE, []
+
     history = _trim_history(chat_history or [])
 
     if history:
