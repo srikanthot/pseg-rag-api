@@ -51,15 +51,19 @@ CONTEXTUALIZE_PROMPT = (
     "(e.g. 'give me in steps', 'list them', 'summarize that', 'make it shorter', "
     "'give me in 3 points', 'list the above', 'give me only 5'), "
     "respond with exactly the single word: REFORMAT\n\n"
-    "2. Otherwise rewrite the user's message as a complete, self-contained question "
-    "that includes all necessary context from the conversation so it can be understood "
-    "without seeing the chat history. Return ONLY the rewritten question — no explanation.\n\n"
+    "2. If the user's message uses pronouns or references that depend on the conversation history "
+    "(e.g. 'that', 'it', 'those', 'the above', 'what about that?', 'how does it apply?'), "
+    "rewrite it as a complete, self-contained question with the necessary context embedded. "
+    "Return ONLY the rewritten question — no explanation.\n\n"
+    "3. If the user's message is already a clear, self-contained question that does NOT depend on "
+    "the previous conversation, return it EXACTLY as written — do not change a word.\n\n"
     "Examples:\n"
-    "  User: 'give me in 3 steps'          → REFORMAT\n"
-    "  User: 'list the above'              → REFORMAT\n"
-    "  User: 'what about pressure limits?' → 'What are the pressure limits for gas pipeline installation?'\n"
-    "  User: 'how does that apply to multi-family buildings?' "
-    "→ 'How do the PSE&G gas service application requirements apply to multi-family residential buildings?'"
+    "  User: 'give me in 3 steps'                            → REFORMAT\n"
+    "  User: 'list the above'                                → REFORMAT\n"
+    "  User: 'what about pressure limits?'                   → 'What are the pressure limits for gas pipeline installation?'\n"
+    "  User: 'how does that apply to multi-family buildings?' → 'How do the gas service requirements apply to multi-family residential buildings?'\n"
+    "  User: 'What are the safety measures for electrical work?' → 'What are the safety measures for electrical work?'\n"
+    "  User: 'What documents are required for a new connection?' → 'What documents are required for a new connection?'"
 )
 
 
@@ -248,13 +252,10 @@ def answer(question: str, top_k: Optional[int] = None, chat_history: Optional[li
         for i, chunk in enumerate(chunks, 1)
     )
 
-    messages = [{"role": "system", "content": SYSTEM_PROMPT.format(sources=sources_text)}]
-    for msg in history:
-        role = msg.get("role")
-        content = msg.get("content", "")
-        if role in ("user", "assistant") and content:
-            messages.append({"role": role, "content": content})
-    messages.append({"role": "user", "content": question})
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT.format(sources=sources_text)},
+        {"role": "user", "content": question},
+    ]
 
     response = _chat_client().chat.completions.create(
         model=settings.azure_openai_chat_deployment,
