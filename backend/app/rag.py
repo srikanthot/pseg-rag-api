@@ -36,8 +36,13 @@ SYSTEM_PROMPT = (
 # Used when the user asks to reformat the previous answer (e.g. "give in steps").
 REFORMAT_PROMPT = (
     "You are a helpful assistant. Reformat or restructure the provided previous answer "
-    "exactly as the user requests. Do not add new information or change the meaning. "
-    "Only change the presentation format."
+    "following the user's format request EXACTLY and LITERALLY.\n\n"
+    "Rules:\n"
+    "- If the user says '1 line' or 'one line', write exactly ONE sentence.\n"
+    "- If the user says 'N steps' or 'N points', write exactly N items.\n"
+    "- If the user says 'summarize', write a brief paragraph.\n"
+    "- Do not add new information or change the meaning. Only change the presentation.\n"
+    "- Never produce more items or lines than the user asked for."
 )
 
 # Used to decide whether the latest message is a reformat request or a new question.
@@ -215,7 +220,7 @@ def _reformat_answer(question: str, prev_answer: str) -> str:
         model=settings.azure_openai_chat_deployment,
         messages=[
             {"role": "system", "content": REFORMAT_PROMPT},
-            {"role": "user", "content": f"Previous answer:\n{prev_answer}\n\nRequest: {question}"},
+            {"role": "user", "content": f"Previous answer:\n{prev_answer}\n\nFormat request: {question}\n\nIMPORTANT: Follow the format request literally. If asked for '1 line', write exactly one sentence."},
         ],
         temperature=0.1,
         max_tokens=1000,
